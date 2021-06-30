@@ -6,7 +6,7 @@ Following an Openshift Kubernetes workshop for building and deploying a microser
 - Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/), use admin console and terminal commands or RedHat Developer [CodeReady workspace](https://developers.redhat.com/products/codeready-workspaces/overview)
 - Uses code from the [Redhat Roadshow parks repositories](https://github.com/openshift-roadshow/) on GitHub
 
-The front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/) on GithHub and uses SpringBoot. 
+The front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/) on GithHub and uses SpringBoot.
 
 The backend service is called [nationalparks](https://github.com/openshift-roadshow/nationalparks) on GitHub. It is a Java Spring Boot application that performs 2D geo-spatial queries against a MongoDB database to locate and return map coordinates of all National Parks in the world. That was just a fancy way of saying that we are going to deploy a webservice that returns a JSON list of places.
 
@@ -114,7 +114,7 @@ Notice there is an error in the logs which will be addressed later.
 
 ### Role-Based Access Control
 
-The Openshift default service account is the one taking the responsibility of running the pods, and OpenShift uses and injects this service account into every pod that is launched. The permissions for that service account can be changed, 
+The Openshift default service account is the one taking the responsibility of running the pods, and OpenShift uses and injects this service account into every pod that is launched. The permissions for that service account can be changed,
 
 View current permissions in the web console, go to the Topology view in the Developer Perspective > pod detail > Details tab > Namespace > Role Bindings. The Create binding can be use to modify roles there.
 
@@ -196,7 +196,7 @@ And finally, the role this component plays in the overall application.
 
 `role=backend`
 
-Click create and check the pods and build status. 
+Click create and check the pods and build status.
 
 #### Java Application
 
@@ -254,7 +254,7 @@ In Topology in the web console, move the mongodb into the workshop area in case 
 
 Add labels to the `mongodb-nationalparks` deployment:
 
-`oc label dc/mongodb-nationalparks svc/mongodb-nationalparks app=workshop component=nationalparks role=database --overwrite` 
+`oc label dc/mongodb-nationalparks svc/mongodb-nationalparks app=workshop component=nationalparks role=database --overwrite`
 
 Check the replica set and observe a new version of the nationalparks pod was deployed. The new version is due to the changes in secrets made in the previous steps.
 
@@ -321,18 +321,17 @@ In the web console, view the pipelines under the Pipelines menu and see 4 Tasks 
 - **build-image**: will build an image using a binary file as input in OpenShift. The build will use the .jar file that was created and a custom Task for it `s2i-java11-binary`
 - **redeploy**: it will deploy the created image on OpenShift using the Deployment named `nationalparks` we created in the previous lab, using the custom Task `redeploy`
 
-The pipeline will take parameters. 
+The pipeline will take parameters.
 
 #### Run Pipeline
 
 In the web console, pipeline detail, click Actions > Start:
+
 - When prompted with parameters to add the Pipeline, add in **APP_GIT_URL** the `nationalparks` repository: `https://github.com/justintungonline/nationalparks.git`
 - In **Workspaces**→ **app-source** select **PVC** from the list, then select **app-source-pvc**. This is the shared volume used by Pipeline Tasks in your Pipeline containing the source code and compiled artifacts.
 - Leave Maven settings, it will use an **EmptyDir** volume for the maven cache, this can be extended also with a PVC to make subsequent Maven builds faster
 
 Start the pipeline. In the web console, observe it running. Clicking on a task will show its logs. Verify the pipeline completes.
-
-
 
 ## Configuration Management
 
@@ -359,7 +358,7 @@ spec:
 ...
 ```
 
-#### [ConfigMaps](https://docs.openshift.com/container-platform/4.6/authentication/configmaps.html) 
+#### [ConfigMaps](https://docs.openshift.com/container-platform/4.6/authentication/configmaps.html)
 
  It contains key value pairs to store configurations as read only. It is like properties.
 
