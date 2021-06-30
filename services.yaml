@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftWebConsole
+  creationTimestamp: "2021-06-30T14:20:59Z"
+  labels:
+    app: workshop
+    app.kubernetes.io/component: parksmap
+    app.kubernetes.io/instance: parksmap
+    app.kubernetes.io/part-of: workshop
+    app.openshift.io/runtime-version: latest
+    component: parksmap
+    role: frontend
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:openshift.io/generated-by: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:app.kubernetes.io/component: {}
+          f:app.kubernetes.io/instance: {}
+          f:app.kubernetes.io/part-of: {}
+          f:app.openshift.io/runtime-version: {}
+          f:component: {}
+          f:role: {}
+      f:spec:
+        f:ports:
+          .: {}
+          k:{"port":8080,"protocol":"TCP"}:
+            .: {}
+            f:name: {}
+            f:port: {}
+            f:protocol: {}
+            f:targetPort: {}
+        f:selector:
+          .: {}
+          f:app: {}
+          f:deploymentconfig: {}
+        f:sessionAffinity: {}
+        f:type: {}
+    manager: Mozilla
+    operation: Update
+    time: "2021-06-30T14:20:59Z"
+  name: parksmap
+  namespace: user9
+  resourceVersion: "244139"
+  selfLink: /api/v1/namespaces/user9/services/parksmap
+  uid: 154d48e3-cc3b-4391-984e-4252928f711c
+spec:
+  clusterIP: 172.30.99.11
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: parksmap
+    deploymentconfig: parksmap
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}

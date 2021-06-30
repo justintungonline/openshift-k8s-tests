@@ -1,0 +1,233 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    k8s.v1.cni.cncf.io/network-status: |-
+      [{
+          "name": "",
+          "interface": "eth0",
+          "ips": [
+              "10.131.0.75"
+          ],
+          "default": true,
+          "dns": {}
+      }]
+    k8s.v1.cni.cncf.io/networks-status: |-
+      [{
+          "name": "",
+          "interface": "eth0",
+          "ips": [
+              "10.131.0.75"
+          ],
+          "default": true,
+          "dns": {}
+      }]
+    openshift.io/generated-by: OpenShiftWebConsole
+    openshift.io/scc: restricted
+  creationTimestamp: "2021-06-30T14:20:59Z"
+  generateName: parksmap-cc574cd78-
+  labels:
+    app: parksmap
+    component: parksmap
+    deploymentconfig: parksmap
+    pod-template-hash: cc574cd78
+    role: frontend
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:openshift.io/generated-by: {}
+        f:generateName: {}
+        f:labels:
+          .: {}
+          f:app: {}
+          f:component: {}
+          f:deploymentconfig: {}
+          f:pod-template-hash: {}
+          f:role: {}
+        f:ownerReferences:
+          .: {}
+          k:{"uid":"f033c3b4-2420-4450-bd92-9a74b57cfca4"}:
+            .: {}
+            f:apiVersion: {}
+            f:blockOwnerDeletion: {}
+            f:controller: {}
+            f:kind: {}
+            f:name: {}
+            f:uid: {}
+      f:spec:
+        f:containers:
+          k:{"name":"parksmap"}:
+            .: {}
+            f:image: {}
+            f:imagePullPolicy: {}
+            f:name: {}
+            f:ports:
+              .: {}
+              k:{"containerPort":8080,"protocol":"TCP"}:
+                .: {}
+                f:containerPort: {}
+                f:protocol: {}
+            f:resources: {}
+            f:terminationMessagePath: {}
+            f:terminationMessagePolicy: {}
+        f:dnsPolicy: {}
+        f:enableServiceLinks: {}
+        f:restartPolicy: {}
+        f:schedulerName: {}
+        f:securityContext: {}
+        f:terminationGracePeriodSeconds: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2021-06-30T14:20:59Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:k8s.v1.cni.cncf.io/network-status: {}
+          f:k8s.v1.cni.cncf.io/networks-status: {}
+    manager: multus
+    operation: Update
+    time: "2021-06-30T14:21:01Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:status:
+        f:conditions:
+          k:{"type":"ContainersReady"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Initialized"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Ready"}:
+            .: {}
+            f:lastProbeTime: {}
+            f:lastTransitionTime: {}
+            f:status: {}
+            f:type: {}
+        f:containerStatuses: {}
+        f:hostIP: {}
+        f:phase: {}
+        f:podIP: {}
+        f:podIPs:
+          .: {}
+          k:{"ip":"10.131.0.75"}:
+            .: {}
+            f:ip: {}
+        f:startTime: {}
+    manager: kubelet
+    operation: Update
+    time: "2021-06-30T14:21:02Z"
+  name: parksmap-cc574cd78-jfzpk
+  namespace: user9
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: parksmap-cc574cd78
+    uid: f033c3b4-2420-4450-bd92-9a74b57cfca4
+  resourceVersion: "244172"
+  selfLink: /api/v1/namespaces/user9/pods/parksmap-cc574cd78-jfzpk
+  uid: b8668f1e-4906-465c-b966-a6d75cc634e6
+spec:
+  containers:
+  - image: quay.io/openshiftroadshow/parksmap@sha256:89d1e324846cb431df9039e1a7fd0ed2ba0c51aafbae73f2abd70a83d5fa173b
+    imagePullPolicy: Always
+    name: parksmap
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+    resources: {}
+    securityContext:
+      capabilities:
+        drop:
+        - KILL
+        - MKNOD
+        - SETGID
+        - SETUID
+      runAsUser: 1000690000
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: default-token-vvn2q
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  imagePullSecrets:
+  - name: default-dockercfg-25zw4
+  nodeName: ip-10-0-179-105.us-east-2.compute.internal
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    fsGroup: 1000690000
+    seLinuxOptions:
+      level: s0:c26,c20
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: default-token-vvn2q
+    secret:
+      defaultMode: 420
+      secretName: default-token-vvn2q
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2021-06-30T14:20:59Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2021-06-30T14:21:02Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2021-06-30T14:21:02Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2021-06-30T14:20:59Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: cri-o://1ce2137d8b4cdcaa69f75b5c0ddfa111b9bef99e6a0a7be416a3435ea47c0366
+    image: quay.io/openshiftroadshow/parksmap@sha256:89d1e324846cb431df9039e1a7fd0ed2ba0c51aafbae73f2abd70a83d5fa173b
+    imageID: quay.io/openshiftroadshow/parksmap@sha256:89d1e324846cb431df9039e1a7fd0ed2ba0c51aafbae73f2abd70a83d5fa173b
+    lastState: {}
+    name: parksmap
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2021-06-30T14:21:02Z"
+  hostIP: 10.0.179.105
+  phase: Running
+  podIP: 10.131.0.75
+  podIPs:
+  - ip: 10.131.0.75
+  qosClass: BestEffort
+  startTime: "2021-06-30T14:20:59Z"
