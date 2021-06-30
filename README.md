@@ -277,7 +277,7 @@ This [`MongoDBConnection.java`](http://www.github.com/openshift-roadshow/nationa
 
 #### Labels and Back end connectivity
 
-**Labels** help the application understand routes and services.  If any of them have a **Label** that is `type=parksmap-backend`, the application checks endpoints to look for map data. Example is [`RouteWatcher.java`](https://github.com/openshift-roadshow/parksmap-web/blob/latest/src/main/java/com/openshift/evg/roadshow/rest/RouteWatcher.java#L20) in the web front end.
+**Labels** help the application understand routes and services.  If any of them have a **Label** that is `type=parksmap-backend`, the application checks endpoints to look for map data. Example is [`RouteWatcher.java`](https://github.com/openshift-roadshow/parksmap-web/blob/master/src/main/java/com/openshift/evg/roadshow/rest/RouteWatcher.java#L19) in the web front end.
 
 Check labels on the `nationalparks` route and add a label so it is designated as a back end.
 
