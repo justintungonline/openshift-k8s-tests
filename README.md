@@ -29,7 +29,7 @@ Name : parksmap
 
 Uncheck the checkbox next to Create a route to the application, it will be set up manually later.
 
-Choose labels
+Choose labels:
 
 First the name to be given to the application.
 
