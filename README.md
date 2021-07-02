@@ -402,8 +402,7 @@ displayName "Amazing National Parks"
 To see this `Amazing National Parks` text change in the parksmap’s legend itself, scale down the parksmap pod to 0, then back up to 1 to force the app to refresh its cache:
 
 ```sh
-oc scale --replicas=0 deployment/parksmap
-oc scale --replicas=1 deployment/parksmap
+oc scale --replicas=0 deployment/parksmap && oc scale --replicas=1 deployment/parksmap
 # Wait for parksmap to reload and verify it is running
 oc get pods
 ```
