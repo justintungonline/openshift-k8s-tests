@@ -138,7 +138,9 @@ After restart, logs will no longer show errors related to the service account.
 
 Optionally, grant access to another user to view your project
 
-`oc policy add-role-to-user view otheruser`
+```sh
+oc policy add-role-to-user view <insert other username>
+```
 
 ### Remote Shell Session to a Container Using the CLI
 
