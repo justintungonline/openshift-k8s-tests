@@ -1,18 +1,17 @@
 # Openshift Kubernetes Tests
 
-Following an Openshift Kubernetes workshop for building and deploying a microservice architecture
+Following an Openshift Kubernetes workshop for building and deploying a microservice architecture. The workshop shows you how OpenShift can be used not only for deploying stateless web applications, but also applications which require persistent file system storage. The flexibility makes OpenShift a platform for deploying both web applications and databases.
 
-- Available in Python, Java, and NodeJS. This repository follows a Java based application. To try other paths, delete the project after completing the workshop and try the different language path
+- Available in Python, Java, and NodeJS. This repository follows a Java based application.
 - Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/), use admin console and terminal commands or RedHat Developer [CodeReady workspace](https://developers.redhat.com/products/codeready-workspaces/overview)
-- Uses code from the [Redhat Roadshow parks repositories](https://github.com/openshift-roadshow/) on GitHub
-
-The front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/) on GithHub and uses SpringBoot.
-
-The backend service is called [nationalparks](https://github.com/openshift-roadshow/nationalparks) on GitHub. It is a Java Spring Boot application that performs 2D geo-spatial queries against a MongoDB database to locate and return map coordinates of all National Parks in the world. That was just a fancy way of saying that we are going to deploy a webservice that returns a JSON list of places.
+- Uses code from the [Redhat Roadshow parks repositories](https://github.com/openshift-roadshow/) on GitHub:
+  - Front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/).
+  - The backend services ares called [nationalparks](https://github.com/openshift-roadshow/nationalparks) and [mlbparks](https://github.com/openshift-roadshow/mlbparks).
+  - It is a Java Spring Boot application that performs 2D geo-spatial queries against a MongoDB database to locate and return map coordinates of all National Parks and Major League Baseball parks in the world. The backends are webservices that return a JSON list of places.
 
 ## Workshop Walkthrough
 
-The workshop uses the Developer perspective in the web console unless it is said otherwise.
+This README follows the workshop using `oc` commands and the Developer perspective in the Openshift web console unless it is said otherwise and a GitHub repository for code. Instead of GitHub, a self hosted [Gogs](https://gogs.io/) server can be used.
 
 ### Deploy Container
 
@@ -333,6 +332,161 @@ In the web console, pipeline detail, click Actions > Start:
 
 Start the pipeline. In the web console, observe it running. Clicking on a task will show its logs. Verify the pipeline completes.
 
+#### Automation on Code Changes
+
+##### Pipeline Triggers
+
+Git server repositories support the concept of web hooks --- calling to an external source via HTTP(S) when a change in the code repository happens. OpenShift provides an API endpoint that supports receiving hooks from remote systems in order to trigger builds. By pointing the code repository's hook at the OpenShift Pipelines resources, automated code/build/deploy pipelines can be achieved using:
+
+- TriggerTemplate: a trigger template is a template for newly created resources. It supports parameters to create specific `PipelineResources` and `PipelineRuns`.
+- TriggerBinding: validates events and extracts payload fields
+- EventListener: connects `TriggerBindings` and `TriggerTemplates` into an addressable endpoint (the event sink). It uses the extracted event parameters from each TriggerBinding (and any supplied static parameters) to create the resources specified in the corresponding TriggerTemplate. It also optionally allows an external service to pre-process the event payload via the interceptor field.
+
+Create a new Pod with a Route that can be used to setup a Webhook on a git server to trigger the automatic start of the Pipeline
+
+```sh
+oc create -f https://raw.githubusercontent.com/justintungonline/nationalparks/master/pipeline/nationalparks-triggers-all.yaml -n <namespace>
+
+# Verify a new pod el-nationalparks is created as the EventListener
+oc get pods
+# Get the URL of the Event listener and copy it
+oc get routes | grep el-nationalparks
+```
+
+Using the URL copied or get the URL from the web console Topology, the URL should something like:
+<http://el-nationalparks-user.sandbox.opentlc.com/>
+
+Make sure there is a `/` at the end.
+
+##### Web Hooks
+
+On the GitHub website, go to your `nationalparks` repository and add a new Webhook with Settings > Webhooks > Add.
+
+- Paste the el-nationalparks URL into the webhook URL and change the `Content Type` to `application/json`.
+- Leave the secret token field blank
+- Choose `Just the push event`
+- Add the webhook
+
+New pushes to the `nationalparks` repository will now trigger a new build and deploy in OpenShift.
+
+##### Trigger the Web Hook
+
+In GitHub, go to your `nationalparks` repository and this file `src/main/java/com/openshift/evg/roadshow/parks/rest/BackendController.java`
+
+Change line number 20:
+
+```java
+return new Backend("nationalparks","National Parks", new Coordinates("47.039304", "14.505178"), 4);
+```
+
+To
+
+```java
+return new Backend("nationalparks","Amazing National Parks", new Coordinates("47.039304", "14.505178"), 4);
+```
+
+Note the change in name with `Amazing`. Commit the change and in Openshift observe a new PipelineRun should be triggered. In the web console, click Pipeline in the left navigation menu then `nationalparks-pipeline`. You should see a new one running or run the following command to verify:
+
+`oc get PipelineRun`
+
+After the pipeline is completed, verify the change at the nationalparks URL similar to  `nationalparks-user.sandbox.opentlc.com/ws/info/`. Using the `/ws/info` context. The JSON returned will show:
+
+```json
+...
+displayName "Amazing National Parks"
+...
+```
+
+To see this `Amazing National Parks` text change in the parksmap’s legend itself, scale down the parksmap pod to 0, then back up to 1 to force the app to refresh its cache:
+
+```sh
+oc scale --replicas=0 deployment/parksmap
+oc scale --replicas=1 deployment/parksmap
+# Wait for parksmap to reload and verify it is running
+oc get pods
+```
+
+The parksmap may take a few minutes to start up and load the new legend and data points again from the backend, then you can visit the parksmap URL.
+
+#### Application Templates
+
+Next is to deploy a map of Major League Baseball stadiums in the US by using a template. It is pre-configured to build the back end Java application, and deploy the MongoDB database. It also uses a **Hook** to call the `/ws/data/load` endpoint to cause the data to be loaded into the database from a JSON file in the source code repository.
+
+Start using the template:
+
+```sh
+# Create the template in the project, a copy is stored in this workshop repository
+oc create -f https://raw.githubusercontent.com/openshift-roadshow/mlbparks/master/ose3/application-template-eap.json
+# Verify it both the mlbparks and MongoDB (imported earlier) templates are available
+oc get template
+# Instantiate the template
+oc new-app mlbparks -p APPLICATION_NAME=mlbparks
+# View the mlbparks template
+oc get template mlbparks -o yaml
+```
+
+The template can also use maven for the build. This option is available if you provide the **MAVEN_MIRROR_URL** parameter with the location of the internal nexus repository: `oc new-app mlbparks --name=mlbparks -p MAVEN_MIRROR_URL=http://nexus.labs.svc.cluster.local:8081/repository/maven-all-public`
+
+This template completed the following in one command:
+
+- Configure and start a build
+  - Using the supplied Maven mirror URL (if you have specified the parameter)
+  - From the supplied source code repository
+- Configure and deploy MongoDB
+  - Using auto-generated user, password, and database name
+- Configure environment variables for the app to connect to the DB
+- Create the correct services
+- Label the app service with `type=parksmap-backend`
+
+In the web console Topology view, put `mlbparks` and `mongodb-mlbparks` into the `workshop` application grouping if it isn't already there.
+
+Another way to instantiate the template is using the web console Developer Perspective (**+Add** > **From Catalog** > search for `mlb`. Use result for `MLBparks` > Go through instantiation form. This step is not required as it was done on the command line already.
+
+The template YAML can also be viewed/edited in the web console Developer Perspective: **Advanced → Search** in the left navigation > select **Template** > **mlbparks**.
+
+### Binary Builds for Day to Day Development
+
+Sometimes S2I is too slow for daily iterative development due to the full build and deploy. A faster option is to use `oc` command to use local code for S2I.
+
+This pattern can be used to send up your working directory to the S2I builder to have it do the Maven build on OpenShift. Using the local directory would relieve you from having Maven or any of the Java toolchain on your local machine AND would also not require git commit with a push. Read more in the [official documentation](https://docs.openshift.com/container-platform/latest/dev_guide/dev_tutorials/binary_builds.html).
+
+#### Using Binary Deployment
+
+The next steps will clone the `mlbparks` source to the local environment, build it locally after a change, and use `oc` to use local binaries for the deployment.
+
+```sh
+# Clone source in a temporary directory
+mkdir temp
+cd temp
+git clone https://github.com/justintungonline/mlbparks.git
+cd mlbparks
+# Build with Maven, get the output location for the .../mlbparks/target/ROOT.war, it will be needed for the oc command later
+# Build application with Maven, it will take a while as Maven donwloads dependencies and then compiles the application
+mvn package
+```
+
+In GitHub website or your editor of choice, change the source code in the `mlbparks` repository `src/main/java/com/openshift/evg/roadshow/rest/BackendController.java`. This is the REST endpoint that gives basic info on the service.
+
+Please change line 23 to add a *AMAZING* in front of "MLB Parks" look like this:
+
+```java
+return new Backend("mlbparks", "AMAZING MLB Parks", new Coordinates("39.82", "-98.57"), 5);
+```
+
+Save the file and build the source again or edit it remotely and commit to the repository, then use `git pull`.
+
+```sh
+# Re-build the WAR file
+mvn package
+# Use oc to use the local WAR file
+# The --follow is optional if you want to follow the build output in your terminal.
+oc start-build bc/mlbparks --from-file=target/ROOT.war --follow
+```
+
+Using labels and a recreate deployment strategy, as soon as the new deployment finishes the map name will be updated. Under a recreate deployment strategy we first tear down the pod before doing our new deployment. When the pod is torn down, the parksmap service removes the MLBParks map from the layers. When it comes back up, the layer automatically gets added back with our new title. This would not have happened with a rolling deployment because rolling spins up the new version of the pod before it takes down the old one. Rolling strategy enables a zero-downtime deployment.
+
+Follow the deployment in progress from Topology view, and when it is completed, you will see the new content at the `mlbparks` backend `/ws/info/` URL.
+
 ## Configuration Management
 
 ### How to pass things into a container?
@@ -392,3 +546,33 @@ data:
 ### How does the front end find the back end?
 
 The front end can query the Kubernetes API to find backends. Finding is done in the application code such as this [`RouteWatcher.java`](https://github.com/openshift-roadshow/parksmap-web/blob/master/src/main/java/com/openshift/evg/roadshow/rest/RouteWatcher.java)
+
+## Further Resources
+
+- **[OpenShift Interactive Learning Portal](https://learn.openshift.com/)** - An online interactive learning environment where you can run through various scenarios related to using OpenShift.
+
+The online interactive learning environment is always available so you can continue to work on those exercises even after the workshop is over.
+
+Below you will find further resources for learning about OpenShift and running OpenShift on your own computer, as well as details about OpenShift Online or other OpenShift related products and services.
+
+- **[OpenShift Documentation](https://docs.openshift.com)** - The landing page for OpenShift documentation.
+
+- **[OpenShift Resources on developers.redhat.com](https://developers.redhat.com/openshift/)** - A collection of resources for developers who are building and deploying applications on OpenShift.
+
+- **[CodeReady Containers](https://developers.redhat.com/products/codeready-containers/overview)** - A tool which can be used to install a local OpenShift cluster on your own computer, running in a virtual machine.
+
+- **[OpenShift Online](https://manage.openshift.com/)** - A shared public hosting environment for running your applications using OpenShift.
+
+- **[OpenShift Dedicated](https://www.openshift.com/dedicated)** - A dedicated hosting environment for running your applications, managed and supported for you by Red Hat.
+
+- **[OpenShift Container Platform](https://www.openshift.com/)** - The Red Hat supported OpenShift product for installation on premise or in hosted cloud environments.
+
+- **[OpenShift Commons](https://commons.openshift.org)** - A community for users, partners, customers, and contributors to come together to collaborate and work together on OpenShift.
+
+The following free online eBooks are also available for download related to OpenShift.
+
+- **[OpenShift for Developers](https://www.openshift.com/for-developers/)**
+
+- **[DevOps with OpenShift](https://www.openshift.com/devops-with-openshift/)**
+
+- **[Deploying with OpenShift](https://www.openshift.com/deploying-to-openshift/)**
