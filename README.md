@@ -3,7 +3,7 @@
 Following an Openshift Kubernetes workshop for building and deploying a microservice architecture. The workshop shows you how OpenShift can be used for deploying stateless web applications and applications which require persistent file system storage. The flexibility makes OpenShift a platform for deploying both web applications and databases.
 
 - Available in Python, Java, and NodeJS. This repository follows a Java based application.
-- Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/) with use admin console and terminal commands or use a RedHat Developer [CodeReady workspace](https://developers.redhat.com/products/codeready-workspaces/overview)
+- Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/) with use admin console and terminal commands.
 - Uses code from the [Redhat Roadshow parks repositories](https://github.com/openshift-roadshow/) on GitHub:
   - Front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/).
   - The backend services ares called [nationalparks](https://github.com/openshift-roadshow/nationalparks) and [mlbparks](https://github.com/openshift-roadshow/mlbparks).
@@ -293,7 +293,7 @@ Use `oc get routes` to get the parksmap URL or check it in the web console. Chec
 
 ### Application Health: Add Readiness and Liveness Probes
 
-A liveness probe checks if the container in which it is configured is still running. If the liveness probe fails, the kubelet kills thecontainer, which will be subjected to its restart policy. Set a liveness check by configuring the `template.spec.containers.livenessprobe`stanza of a pod configuration. A readiness probe determines if a container is ready to service requests. If the readiness probe fails acontainer, the endpoints controller ensures the container has its IP address removed from the endpoints of all services. A readiness probe canbe used to signal to the endpoints controller that even though a container is running, it should not receive any traffic from a proxy. Set areadiness check by configuring the `template.spec.containers.readinessprobe` stanza of a pod configuration.
+A liveness probe checks if the container in which it is configured is still running. If the liveness probe fails, the kubelet kills thecontainer, which will be subjected to its restart policy. Set a liveness check by configuring the `template.spec.containers.livenessprobe` stanza of a pod configuration. A readiness probe determines if a container is ready to service requests. If the readiness probe fails acontainer, the endpoints controller ensures the container has its IP address removed from the endpoints of all services. A readiness probe canbe used to signal to the endpoints controller that even though a container is running, it should not receive any traffic from a proxy. Set areadiness check by configuring the `template.spec.containers.readinessprobe` stanza of a pod configuration.
 
 See [Application Health](https://docs.openshift.com/container-platform/latest/applications/application-health.html) documentation for details.
 
@@ -418,7 +418,7 @@ Start using the template:
 ```sh
 # Create the template in the project, a copy is stored in this workshop repository
 oc create -f https://raw.githubusercontent.com/openshift-roadshow/mlbparks/master/ose3/application-template-eap.json
-# Verify it both the mlbparks and MongoDB (imported earlier) templates are available
+# Verify both the mlbparks and MongoDB (imported earlier) templates are available
 oc get template
 # Instantiate the template
 oc new-app mlbparks -p APPLICATION_NAME=mlbparks
@@ -426,7 +426,7 @@ oc new-app mlbparks -p APPLICATION_NAME=mlbparks
 oc get template mlbparks -o yaml
 ```
 
-The template can also use maven for the build. This option is available if you provide the **MAVEN_MIRROR_URL** parameter with the location of the internal nexus repository: `oc new-app mlbparks --name=mlbparks -p MAVEN_MIRROR_URL=http://nexus.labs.svc.cluster.local:8081/repository/maven-all-public`
+The template can also use Maven for the build. This option is available if you provide the **MAVEN_MIRROR_URL** parameter with the location of a nexus repository like: `oc new-app mlbparks --name=mlbparks -p MAVEN_MIRROR_URL=http://nexus.labs.svc.cluster.local:8081/repository/maven-all-public`
 
 This template completed the following in one command:
 
