@@ -3,7 +3,7 @@
 Following an Openshift Kubernetes workshop for building and deploying a microservice architecture. The workshop shows you how OpenShift can be used for deploying stateless web applications and applications which require persistent file system storage. The flexibility makes OpenShift a platform for deploying both web applications and databases.
 
 - Available in Python, Java, and NodeJS. This repository follows a Java based application.
-- Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/) with use admin console and terminal commands.
+- Uses a free [Openshift playgrounds](https://www.katacoda.com/courses/openshift/playgrounds/) using the Openshift web console with administrative access and `oc` terminal commands.
 - Uses code from the [Redhat Roadshow parks repositories](https://github.com/openshift-roadshow/) on GitHub:
   - Front end service users a Docker image of the [parksmap web application](https://github.com/openshift-roadshow/parksmap-web/).
   - The backend services ares called [nationalparks](https://github.com/openshift-roadshow/nationalparks) and [mlbparks](https://github.com/openshift-roadshow/mlbparks).
