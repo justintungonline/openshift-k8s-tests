@@ -177,7 +177,7 @@ If you want or need to allow OpenShift users to deploy container images that do 
 
 In Openshift web console, choose topology / +Add > From Git and enter.
 
-- From Git Repo URL: `https://github.com/justintungonline/nationalparks.git`. The workshop uses an embedded git server. This walk through uses a GitHub repository instead
+- From Git Repo URL: `https://github.com/justunsix/nationalparks.git`. The workshop uses an embedded git server. This walk through uses a GitHub repository instead
 - Git Type: Other
 - Choose builder image as Java, version 11
 - Application Name : workshop
@@ -328,7 +328,7 @@ The pipeline will take parameters.
 
 In the web console, pipeline detail, click Actions > Start:
 
-- When prompted with parameters to add the Pipeline, add in **APP_GIT_URL** the `nationalparks` repository: `https://github.com/justintungonline/nationalparks.git`
+- When prompted with parameters to add the Pipeline, add in **APP_GIT_URL** the `nationalparks` repository: `https://github.com/justunsix/nationalparks.git`
 - In **Workspaces**→ **app-source** select **PVC** from the list, then select **app-source-pvc**. This is the shared volume used by Pipeline Tasks in your Pipeline containing the source code and compiled artifacts.
 - Leave Maven settings, it will use an **EmptyDir** volume for the maven cache, this can be extended also with a PVC to make subsequent Maven builds faster
 
@@ -459,7 +459,7 @@ The next steps will clone the `mlbparks` source to the local environment, build 
 # Clone source in a temporary directory
 mkdir temp
 cd temp
-git clone https://github.com/justintungonline/mlbparks.git
+git clone https://github.com/justunsix/mlbparks.git
 cd mlbparks
 # Build with Maven, get the output location for the .../mlbparks/target/ROOT.war, it will be needed for the oc command later
 # Build application with Maven, it will take a while as Maven donwloads dependencies and then compiles the application
