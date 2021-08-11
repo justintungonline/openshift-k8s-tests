@@ -556,6 +556,8 @@ The online interactive learning environment is always available so you can conti
 
 Below you will find further resources for learning about OpenShift and running OpenShift on your own computer, as well as details about OpenShift Online or other OpenShift related products and services.
 
+Additional courses and learning scenarios are available at [Katacoda](https://www.katacoda.com/openshift).
+
 - **[OpenShift Documentation](https://docs.openshift.com)** - The landing page for OpenShift documentation.
 
 - **[OpenShift Resources on developers.redhat.com](https://developers.redhat.com/openshift/)** - A collection of resources for developers who are building and deploying applications on OpenShift.
