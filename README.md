@@ -45,7 +45,7 @@ And finally, the role this component plays in the overall application.
 
 Using oc command in terminal, check application is running and its configuration.
 
-- The oc command can be downloaded from the web console under help (question mark icon) and then choose command line tools. The oc command uses `curl` to use the Kubernetes API behind the scenes.
+- The oc command can be downloaded from the web console under help (question mark icon) and then choose command line tools. The `oc` command uses `curl` to use the Kubernetes API behind the scenes.
 - Keep the web console open on the Topology window of the application to see changes shown as changes are made
 
 ```sh
@@ -556,7 +556,7 @@ The online interactive learning environment is always available so you can conti
 
 Below you will find further resources for learning about OpenShift and running OpenShift on your own computer, as well as details about OpenShift Online or other OpenShift related products and services.
 
-Additional courses and learning scenarios are available at [Katacoda](https://www.katacoda.com/openshift).
+- **[Katacoda](https://www.katacoda.com/openshift)** offers courses and learning scenarios. Learning and hands on exercises can be done all in a browser.
 
 - **[OpenShift Documentation](https://docs.openshift.com)** - The landing page for OpenShift documentation.
 
