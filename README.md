@@ -11,7 +11,7 @@ Following an Openshift Kubernetes workshop for building and deploying a microser
 
 ## Workshop Walkthrough
 
-This README follows the workshop using `oc` commands and the Developer perspective in the Openshift web console unless it is said otherwise and a GitHub repository for code. Instead of GitHub, a self hosted [Gogs](https://gogs.io/) server can be used.
+This README follows the workshop using `oc` commands and the Developer perspective in the Openshift web console unless it is said otherwise and a GitHub repository for code. Instead of GitHub, a self hosted git [Gogs](https://gogs.io/) server can be used.
 
 ### Deploy Container
 
