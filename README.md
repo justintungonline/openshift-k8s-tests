@@ -482,7 +482,12 @@ oc rsh <insert pod name> whoami
 
 ### Deploy the Java/Python Code
 
-#### Source to Image (S2I)
+- A backend service will be deployed developed in Java/Python that will expose 2 REST endpoints to the visualizer application, the parksmap web app  deployed in the previously.
+- The application will query for national parks information including coordinates that is stored in a MongoDB database. This application will also provide an external access point, so that the API provided can be directly used by the end user.
+
+#### Source to Image (S2I) with Remote Repository with Java Code
+
+- OpenShift can build images using source code from an existing repository. This is accomplished using the [Source-to-Image project](https://docs.openshift.com/container-platform/latest/openshift_images/using_images/using-s21-images.html).
 
 In Openshift web console, choose topology / +Add > From Git and enter.
 
@@ -491,28 +496,29 @@ In Openshift web console, choose topology / +Add > From Git and enter.
 - Choose builder image as Java, version 11
 - Application Name : workshop
 - Name : nationalparks
+- In Resource, select Deployment
+- In labels, add 3 of them similar to before:
+  - `app=workshop`
+  - `component=nationalparks`
+  - `role=backend`
+- Create the from git image
 
-Expand the Labels section and add 3 labels:
+#### Source to Image (S2I) with Embedded Git Server for Repository with Python Code
 
-The name of the Application group:
+In Openshift web console, choose topology / +Add > From Git and enter.
 
-`app=workshop`
+- Use the embedded git repo URL
+- Git Type: other
+- Select python as Builder Image
+- Follow rest of steps like the Java instructions above starting with the application name
 
-Next the name of this deployment.
+#### Java/Python Application Verification
 
-`component=nationalparks`
-
-And finally, the role this component plays in the overall application.
-
-`role=backend`
-
-Click create and check the pods and build status.
-
-#### Java Application
-
-This is a Java-based application that uses Maven as the build and dependency system. For this reason, the initial build will take a few minutes as Maven downloads all of the dependencies needed for the application.
+- The Java-based application uses Maven as the build and dependency system.
+- The initial build will take a few minutes as all of the dependencies needed for the application.
 
 ```sh
+# Verify S2I is deployed
 oc get pods
 oc get builds
 # View build logs
@@ -522,7 +528,7 @@ oc get pods
 # Notice the build pod is completed while the back end pod is now running
 
 # Openshift automatically created a route for the application
-# Check the routes and the URLs for each pod
+# Check the routes and the URLs for each pod in a browser
 oc get routes
 ```
 
@@ -533,25 +539,34 @@ The JSON confirms the back end is running
 
 ### Adding a Database (MongoDB)
 
+- This step will deploy a MongoDB database that will be used to store the data for the nationalparks application.
+- It will also connect the nationalparks service with the newly deployed MongoDB database, so that the nationalparks service can load and query the database for the corresponding information.
+- The nationalparks application will be marked as a backend for the map visualization tool, so that it can be dynamically discovered by the parksmap component using the OpenShift discovery mechanism and the map will be displayed automatically.
+- Most useful applications are "stateful" or "dynamic" and usually achieved with a database or other data storage. - - This step will add a MongoDB to the nationalparks application and configure it to talk to the database using environment variables via a secret.
+- It will use the  MongoDB image that is included with OpenShift.
+- By default, this will use EmptyDir for data storage, which means if the Pod disappears the data does as well. In a real application you would use OpenShift’s persistent storage mechanism to attach real-world storage (NFS, Ceph, EBS, iSCSI, etc) to the Pods to give them a persistent place to store their data.
+
 #### Templates and Create a Database
 
-Create a MongoDB template inside the project, so that is only visible to our user and we can access it from Developer Perspective to create a MongoDB instance.
+- Create a MongoDB template inside the project, so that is only visible to our user and we can access it from Developer Perspective to create a MongoDB instance.
+- Use a Template to allow OpenShift to automatically generate things for deployments
 
-`oc create -f https://raw.githubusercontent.com/openshift-labs/starter-guides/ocp-4.6/mongodb-template.yaml -n <project name>`
+```shell
+
+oc create -f https://raw.githubusercontent.com/openshift-labs/starter-guides/ocp-4.8/mongodb-template.yaml -n <project-name>
+
+```
 
 In the Developer Perspective click **+Add** and then **Database**. In the Databases view, you can click **Mongo** to filter for just MongoDB (Make sure to uncheck **Operator Backed** option from **Type** section). Click **Instantiate Template** button
 Alternatively, you could type `mongodb` in the search box. Once you have drilled down to see MongoDB, find the **MongoDB (Ephemeral)** template and select it. Normally, in a real application persistent storage is required, but this workshop uses temporary storage.
 
 - You can see that some of the fields say "generated if empty". This is a feature of Templates in OpenShift. For now, be sure to use the following values in their respective fields:
 
+- Leave namespace settings at defaults
 - `Database Service Name` : `mongodb-nationalparks`
-
 - `MongoDB Connection Username` : `mongodb`
-
 - `MongoDB Connection Password` : `mongodb`
-
 - `MongoDB Database Name`: `mongodb`
-
 - `MongoDB Admin Password` : `mongodb`
 
 These values are for workshop purposes and should be changed for a real deployment of a database. Click create, then go to secrets.
@@ -562,15 +577,16 @@ In secrets, find the one with name `mongodb-ephemeral-parameters....`. Click the
 
 In Topology in the web console, move the mongodb into the workshop area in case it is not already there.
 
-Add labels to the `mongodb-nationalparks` deployment:
+``` shell
 
-`oc label dc/mongodb-nationalparks svc/mongodb-nationalparks app=workshop component=nationalparks role=database --overwrite`
+# Add labels to the `mongodb-nationalparks` deployment and check it
+oc label dc/mongodb-nationalparks svc/mongodb-nationalparks app=workshop component=nationalparks role=database --overwrite
 
-Check the replica set and observe a new version of the nationalparks pod was deployed. The new version is due to the changes in secrets made in the previous steps.
+# Check the replica set and observe a new version of the nationalparks pod was deployed. The new version is due to the changes in secrets made in the previous steps.
+oc get rs
+# The old versions are listed as Desired: 0, Current: 0.
 
-`oc get rs`
-
-The old versions are listed as Desired: 0, Current: 0.
+```
 
 #### Load data
 
@@ -587,22 +603,55 @@ This [`MongoDBConnection.java`](http://www.github.com/openshift-roadshow/nationa
 
 #### Labels and Back end connectivity
 
-**Labels** help the application understand routes and services.  If any of them have a **Label** that is `type=parksmap-backend`, the application checks endpoints to look for map data. Example is [`RouteWatcher.java`](https://github.com/openshift-roadshow/parksmap-web/blob/master/src/main/java/com/openshift/evg/roadshow/rest/RouteWatcher.java#L19) in the web front end.
+- **Labels** help the application understand routes and services.  If any of them have a **Label** that is `type=parksmap-backend`, the application checks endpoints to look for map data.
+  - Java example is [`RouteWatcher.java`](https://github.com/openshift-roadshow/parksmap-web/blob/master/src/main/java/com/openshift/evg/roadshow/rest/RouteWatcher.java#L19) in the web front end.
+  - Python example is [`wsgi.py`](https://github.com/openshift-roadshow/nationalparks-py/blob/master/wsgi.py#L11-L18)
 
-Check labels on the `nationalparks` route and add a label so it is designated as a back end.
+Check labels on the `nationalparks` route and add a label so it is designated as a back end. That way the front end will know its backend by the label.
 
 ```sh
-# Check existiong labels
+# Check existiong rout
 oc describe route nationalparks
-# Add label
+# Add label so parksmap know it is the backend
 oc label route nationalparks type=parksmap-backend
 ```
 
 Use `oc get routes` to get the parksmap URL or check it in the web console. Check the front end parksmap URL and you will see points coming up on the map.
 
+The `nationalparks` route will look like:
+
+```shell
+Name:                   nationalparks
+Namespace:              user50
+Created:                3 hours ago
+Labels:                 app=workshop
+                        app.kubernetes.io/component=nationalparks
+                        app.kubernetes.io/instance=nationalparks
+                        app.kubernetes.io/name=nationalparks
+                        app.kubernetes.io/part-of=workshop
+                        app.openshift.io/runtime=python
+                        app.openshift.io/runtime-version=3.8-ubi7
+                        component=nationalparks
+                        role=backend
+                        type=parksmap-backend
+Annotations:            openshift.io/host.generated=true
+Requested Host:         nationalparks-user50.apps.cluster-zbt47.zbt47.sandbox1620.opentlc.com
+                           exposed on router default (host router-default.apps.cluster-zbt47.zbt47.sandbox1620.opentlc.com) 3 hours ago
+Path:                   <none>
+TLS Termination:        <none>
+Insecure Policy:        <none>
+Endpoint Port:          8080-tcp
+
+Service:        nationalparks
+Weight:         100 (100%)
+Endpoints:      10.131.10.38:8080
+```
+
 ### Application Health: Add Readiness and Liveness Probes
 
-A liveness probe checks if the container in which it is configured is still running. If the liveness probe fails, the kubelet kills thecontainer, which will be subjected to its restart policy. Set a liveness check by configuring the `template.spec.containers.livenessprobe` stanza of a pod configuration. A readiness probe determines if a container is ready to service requests. If the readiness probe fails acontainer, the endpoints controller ensures the container has its IP address removed from the endpoints of all services. A readiness probe canbe used to signal to the endpoints controller that even though a container is running, it should not receive any traffic from a proxy. Set areadiness check by configuring the `template.spec.containers.readinessprobe` stanza of a pod configuration.
+- A liveness probe checks if the container in which it is configured is still running. If the liveness probe fails, the kubelet kills the container, which will be subjected to its restart policy.
+- Set a liveness check by configuring the `template.spec.containers.livenessprobe` stanza of a pod configuration. A readiness probe determines if a container is ready to service requests. If the readiness probe fails acontainer, the endpoints controller ensures the container has its IP address removed from the endpoints of all services.
+- A readiness probe can be used to signal to the endpoints controller that even though a container is running, it should not receive any traffic from a proxy. Set areadiness check by configuring the `template.spec.containers.readinessprobe` stanza of a pod configuration.
 
 See [Application Health](https://docs.openshift.com/container-platform/latest/applications/application-health.html) documentation for details.
 
@@ -612,19 +661,30 @@ Add a Readiness Probe using Path: `/ws/healthz/`. Repeat for Liveness Probe with
 
 ### Continuous Integration and Pipelines
 
-OpenShift Pipelines is a cloud-native, continuous integration and delivery (CI/CD) solution for building pipelines using [Tekton](https://tekton.dev/).
+A continuous delivery (CD) pipeline is an automated expression of your process for getting software from version control right through to your users and customers. Every change to your software (committed in source control) goes through a complex process on its way to being released. This process involves building the software in a reliable and repeatable manner, as well as progressing the built software (called a "build") through multiple stages of testing and deployment.
+
+OpenShift Pipelines is a cloud-native, continuous integration and delivery (CI/CD) solution for building pipelines using [Tekton](https://tekton.dev/) which automates deployments across platforms.
+
+Custom Tekton resources are:
+
+- Task: a reusable, loosely coupled number of steps that perform a specific task
+- Pipeline: a collection of tasks that are run sequentially to define automated steps
+- TaskRun: run and result of a task
+- PipelineRun: run and result of a pipeline that includes a number of TaskRuns. PipelineRuns are managed by Tekton Controllers
 
 #### Deploy Pipeline
 
 Deploy the pipeline stored in the code repository and verify the tasks and pipelines are present
 
 ```sh
+
 oc create -f https://raw.githubusercontent.com/justintungonline/nationalparks/master/pipeline/nationalparks-pipeline-all-new.yaml -n <namespace>
+# Verify tasks are available in the cluster
 oc get tasks -n <namespace>
 oc get pipelines -n <namespace>
 ```
 
-In the web console, view the pipelines under the Pipelines menu and see 4 Tasks defined:
+In the web console, view the pipelines under the Pipelines menu and see 4 Tasks defined for a Java application:
 
 - **git clone**: this is a `ClusterTask` that will clone source repository for nationalparks and store it to a `Workspace` `app-source` which will use the PVC created for it `app-source-workspace`
 - **build-and-test**: will build and test our Java application using `maven` `ClusterTask`
@@ -645,13 +705,16 @@ Start the pipeline. In the web console, observe it running. Clicking on a task w
 
 #### Automation on Code Changes
 
+- Most Git repository servers support web hooks  —  calling to an external source via HTTP(S) when a change in the code repository happens.
+- OpenShift has an API endpoint that can receive hooks from remote systems in order to trigger builds. Pointing the code repository’s hook at the OpenShift Pipelines resources allows automated code/build/deploy pipelines.
+
 ##### Pipeline Triggers
 
-Git server repositories support the concept of web hooks --- calling to an external source via HTTP(S) when a change in the code repository happens. OpenShift provides an API endpoint that supports receiving hooks from remote systems in order to trigger builds. By pointing the code repository's hook at the OpenShift Pipelines resources, automated code/build/deploy pipelines can be achieved using:
+Tekton triggers enable configuring of pipelines to respond to events like git push events. Adding triggering support requires:
 
-- TriggerTemplate: a trigger template is a template for newly created resources. It supports parameters to create specific `PipelineResources` and `PipelineRuns`.
+- TriggerTemplate: a trigger template is a template for newly created resources. It supports parameters to create specific `PipelineResources` and `PipelineRuns`.
 - TriggerBinding: validates events and extracts payload fields
-- EventListener: connects `TriggerBindings` and `TriggerTemplates` into an addressable endpoint (the event sink). It uses the extracted event parameters from each TriggerBinding (and any supplied static parameters) to create the resources specified in the corresponding TriggerTemplate. It also optionally allows an external service to pre-process the event payload via the interceptor field.
+- EventListener: connects `TriggerBindings` and `TriggerTemplates` into an addressable endpoint (the event sink). It uses the extracted event parameters from each TriggerBinding (and any supplied static parameters) to create the resources specified in the corresponding TriggerTemplate. It also optionally allows an external service to pre-process the event payload via the interceptor field.
 
 Create a new Pod with a Route that can be used to setup a Webhook on a git server to trigger the automatic start of the Pipeline
 
@@ -673,7 +736,7 @@ Make sure there is a `/` at the end.
 
 On the GitHub website, go to your `nationalparks` repository and add a new Webhook with Settings > Webhooks > Add.
 
-- Paste the el-nationalparks URL into the webhook URL and change the `Content Type` to `application/json`.
+- Paste the el-nationalparks URL into the webhook URL and change the `Content Type` to `application/json`.
 - Leave the secret token field blank
 - Choose `Just the push event`
 - Add the webhook
@@ -696,7 +759,7 @@ To
 return new Backend("nationalparks","Amazing National Parks", new Coordinates("47.039304", "14.505178"), 4);
 ```
 
-Note the change in name with `Amazing`. Commit the change and in Openshift observe a new PipelineRun should be triggered. In the web console, click Pipeline in the left navigation menu then `nationalparks-pipeline`. You should see a new one running or run the following command to verify:
+Note the change in name with `Amazing`. Commit the change and in Openshift observe a new PipelineRun should be triggered. In the web console, click Pipeline in the left navigation menu then `nationalparks-pipeline`. You should see a new one running or run the following command to verify:
 
 `oc get PipelineRun`
 
@@ -865,26 +928,18 @@ The online interactive learning environment is always available so you can conti
 
 Below you will find further resources for learning about OpenShift and running OpenShift on your own computer, as well as details about OpenShift Online or other OpenShift related products and services.
 
-- **[Katacoda](https://www.katacoda.com/openshift)** offers courses and learning scenarios. Learning and hands on exercises can be done all in a browser.
-
-- **[OpenShift Documentation](https://docs.openshift.com)** - The landing page for OpenShift documentation.
-
-- **[OpenShift Resources on developers.redhat.com](https://developers.redhat.com/openshift/)** - A collection of resources for developers who are building and deploying applications on OpenShift.
-
-- **[CodeReady Containers](https://developers.redhat.com/products/codeready-containers/overview)** - A tool which can be used to install a local OpenShift cluster on your own computer, running in a virtual machine.
-
-- **[OpenShift Online](https://manage.openshift.com/)** - A shared public hosting environment for running your applications using OpenShift.
-
-- **[OpenShift Dedicated](https://www.openshift.com/dedicated)** - A dedicated hosting environment for running your applications, managed and supported for you by Red Hat.
-
 - **[OpenShift Container Platform](https://www.openshift.com/)** - The Red Hat supported OpenShift product for installation on premise or in hosted cloud environments.
 
+- **[OpenShift Documentation](https://docs.openshift.com)** - The landing page for OpenShift documentation.
+- **[OpenShift Resources on developers.redhat.com](https://developers.redhat.com/openshift/)** - A collection of resources for developers who are building and deploying applications on OpenShift.
+
+- **[OpenShift Local](https://developers.redhat.com/products/openshift-local/overview)** - Install a local OpenShift cluster on your own computer
+- **[OpenShift Online](https://manage.openshift.com/)** - A shared public hosting environment for running your applications using OpenShift.
+- **[OpenShift Dedicated](https://www.openshift.com/dedicated)** - A dedicated hosting environment for running your applications, managed and supported for you by Red Hat.
 - **[OpenShift Commons](https://commons.openshift.org)** - A community for users, partners, customers, and contributors to come together to collaborate and work together on OpenShift.
 
 The following free online eBooks are also available for download related to OpenShift.
 
 - **[OpenShift for Developers](https://www.openshift.com/for-developers/)**
-
 - **[DevOps with OpenShift](https://www.openshift.com/devops-with-openshift/)**
-
 - **[Deploying with OpenShift](https://www.openshift.com/deploying-to-openshift/)**
